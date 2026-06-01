@@ -58,7 +58,6 @@ void customerDashboard(String username) {
   print('\nWelcome customer, ${customer.username}');
 
   while (true) {
-    //switch case to present options: See his account, read account-balance
     print(
       '\n------------------------------------------------\n'
       'Please select an option to proceed:\n'
@@ -427,6 +426,113 @@ void closeAccount(Customer customer) {
 void adminDashboard() {
   print('Welcome Admin');
   //switch case to present option: See all customer, see all accounts, delete any account
+
+  while (true) {
+    print(
+      '\n------------------------------------------------\n'
+      'Please select an option to proceed:\n'
+      '1) View All Customers\n'
+      '2) View All Accounts\n'
+      '3) Delete Account\n'
+      '4) Exit\n',
+    );
+
+    String input = stdin.readLineSync() ?? '';
+
+    if (input.isEmpty || input.length > 1) {
+      print('Invalid input\n');
+      continue;
+    }
+    int option = int.parse(input);
+    switch (option) {
+      case 1:
+        viewAllCustomersAdmin();
+      case 2:
+        viewAllAccountsAdmin();
+      case 3:
+        deleteAccountAdmin();
+      case 4:
+        print('Goodbye');
+        exit(0);
+      default:
+        print('Invalid input\n');
+        continue;
+    }
+  }
+}
+
+void viewAllCustomersAdmin() {
+  print('\nAll active customers:');
+  if (_users.isEmpty) {
+    print('No customers created');
+  }
+  for (User user in _users) {
+    if (user.runtimeType != Customer) {
+      continue;
+    }
+    Customer customer = user as Customer;
+    print(
+      'Username: ${customer.username} | '
+      'Password: ${customer.password} | '
+      'ID: ${customer.id} | '
+      'Name: ${customer.name} | '
+      'Accounts: \n',
+    );
+    for (Account account in customer.accounts) {
+      account.printReceipt();
+    }
+  }
+  print('');
+}
+
+void viewAllAccountsAdmin() {
+  print('\nAll active accounts:');
+  if (_accounts.isEmpty) {
+    print('No accounts created');
+  }
+  for (Account account in _accounts) {
+    account.printReceipt();
+  }
+  print('');
+}
+
+void deleteAccountAdmin() {
+  Account? account;
+  while (true) {
+    print('\nEnter account number to delete');
+    String input = stdin.readLineSync() ?? '';
+    if (input.isEmpty) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    int accountNumber;
+    try {
+      accountNumber = int.parse(input);
+    } catch (e) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    for (Account acc in _accounts) {
+      if (accountNumber == acc.accountID) {
+        account = acc;
+      }
+    }
+
+    if (account == null) {
+      print('Account not found\n');
+      continue;
+    }
+
+    if (_accounts.remove(account)) {
+      print('Account deleted successfully');
+      return;
+    } else {
+      print('Account not found\n');
+      continue;
+    }
+  }
 }
 
 class LoginResults {

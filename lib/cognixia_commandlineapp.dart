@@ -17,24 +17,30 @@ void welcome() {
 }
 
 LoginResults login() {
-  print('Please enter username and password, space separated');
+  while (true) {
+    print('Please enter username and password, space separated');
 
-  String input = stdin.readLineSync() ?? '';
-  List<String> splitInput = input.split(' ');
-  String username = splitInput[0];
-  String password = splitInput[1];
-
-  if (username == 'admin' && password == 'admin123') {
-    return LoginResults('admin', true);
-  }
-
-  for (User user in _users) {
-    if (username == user.username && password == user.password) {
-      return LoginResults(user.username, true);
+    String input = stdin.readLineSync() ?? '';
+    List<String> splitInput = input.split(' ');
+    if (splitInput.length != 2) {
+      print('Invalid input\n');
+      continue;
     }
-  }
+    String username = splitInput[0];
+    String password = splitInput[1];
 
-  return LoginResults(username, false);
+    if (username == 'admin' && password == 'admin123') {
+      return LoginResults('admin', true);
+    }
+
+    for (User user in _users) {
+      if (username == user.username && password == user.password) {
+        return LoginResults(user.username, true);
+      }
+    }
+
+    return LoginResults(username, false);
+  }
 }
 
 void customerDashboard(String username) {
@@ -54,7 +60,7 @@ void customerDashboard(String username) {
   while (true) {
     //switch case to present options: See his account, read account-balance
     print(
-      '------------------------------------------------\n'
+      '\n------------------------------------------------\n'
       'Please select an option to proceed:\n'
       '1) Create Account\n'
       '2) View All Accounts\n'
@@ -82,6 +88,7 @@ void customerDashboard(String username) {
       case 4:
         doWithdraw(customer);
       case 5:
+        doTransfer(customer);
       case 6:
       case 7:
         print('Goodbye');
@@ -261,7 +268,113 @@ void doWithdraw(Customer customer) {
       continue;
     }
 
-    account.withdraw(amount);
+    if (account.withdraw(amount)) {
+      print('\nWithdrawal successful');
+    } else if (account.accountType == 'Checking') {
+      print(
+        '\nThis withdrawal is not allowed as you would exceed your overdraft limit',
+      );
+    } else if (account.accountType == 'Savings') {
+      print(
+        '\nThis withdrawal is not allowed as it would bring your balance below \$100',
+      );
+    }
+    return;
+  }
+}
+
+void doTransfer(Customer customer) {
+  Account? source;
+  Account? destination;
+
+  while (true) {
+    print('\nEnter source account number');
+    String input = stdin.readLineSync() ?? '';
+    if (input.isEmpty) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    int accountNumber;
+    try {
+      accountNumber = int.parse(input);
+    } catch (e) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    for (Account acc in customer.accounts) {
+      if (accountNumber == acc.accountID) {
+        source = acc;
+      }
+    }
+
+    if (source == null) {
+      print('Account not found\n');
+      continue;
+    }
+
+    break;
+  }
+
+  while (true) {
+    print('\nEnter destination account number');
+    String input = stdin.readLineSync() ?? '';
+    if (input.isEmpty) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    int accountNumber;
+    try {
+      accountNumber = int.parse(input);
+    } catch (e) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    for (Account acc in customer.accounts) {
+      if (accountNumber == acc.accountID) {
+        destination = acc;
+      }
+    }
+
+    if (destination == null) {
+      print('Account not found\n');
+      continue;
+    }
+
+    break;
+  }
+
+  while (true) {
+    print('\nEnter the amount to transfer');
+    String input = stdin.readLineSync() ?? '';
+    if (input.isEmpty) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    double amount;
+    try {
+      amount = double.parse(input);
+    } catch (e) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    if (source.withdraw(amount)) {
+      destination.deposit(amount);
+      print('\nTransfer successful');
+    } else if (source.accountType == 'Checking') {
+      print(
+        '\nThis transfer is not allowed as you would exceed source account overdraft limit',
+      );
+    } else if (source.accountType == 'Savings') {
+      print(
+        '\nThis transfer is not allowed as it would bring source account balance below \$100',
+      );
+    }
     return;
   }
 }
@@ -359,7 +472,7 @@ abstract class Account {
     _balance += amount;
   }
 
-  void withdraw(double amount);
+  bool withdraw(double amount);
 }
 
 class CheckingAccount extends Account {
@@ -375,14 +488,12 @@ class CheckingAccount extends Account {
   String get accountType => _accountType;
 
   @override
-  void withdraw(double amount) {
+  bool withdraw(double amount) {
     if (_balance - amount < _overdraftLimit) {
-      print(
-        'This withdrawal is not allowed as you would exceed your overdraft limit',
-      );
+      return false;
     } else {
       _balance -= amount;
-      print('Withdrawal successful');
+      return true;
     }
   }
 }
@@ -399,14 +510,12 @@ class SavingsAccount extends Account {
   String get accountType => _accountType;
 
   @override
-  void withdraw(double amount) {
+  bool withdraw(double amount) {
     if (_balance - amount < 100) {
-      print(
-        'This withdrawal is not allowed as it would bring your balance below \$100',
-      );
+      return false;
     } else {
       _balance -= amount;
-      print('Withdrawal successful');
+      return true;
     }
   }
 }

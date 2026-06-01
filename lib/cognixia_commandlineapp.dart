@@ -90,6 +90,7 @@ void customerDashboard(String username) {
       case 5:
         doTransfer(customer);
       case 6:
+        closeAccount(customer);
       case 7:
         print('Goodbye');
         exit(0);
@@ -158,11 +159,7 @@ void viewAllAccounts(Customer customer) {
     print('No accounts created');
   }
   for (Account account in customer.accounts) {
-    print(
-      'Account Type: ${account.accountType} | '
-      'Account ID: ${account.accountID} | '
-      'Balance: ${account.balance}',
-    );
+    account.printReceipt();
   }
   print('');
 }
@@ -216,6 +213,9 @@ void doDeposit(Customer customer) {
     }
 
     account.deposit(amount);
+    print('\nDeposit successful');
+    print('\nUpdated account status:');
+    account.printReceipt();
     return;
   }
 }
@@ -270,6 +270,8 @@ void doWithdraw(Customer customer) {
 
     if (account.withdraw(amount)) {
       print('\nWithdrawal successful');
+      print('\nUpdated account status:');
+      account.printReceipt();
     } else if (account.accountType == 'Checking') {
       print(
         '\nThis withdrawal is not allowed as you would exceed your overdraft limit',
@@ -366,6 +368,10 @@ void doTransfer(Customer customer) {
     if (source.withdraw(amount)) {
       destination.deposit(amount);
       print('\nTransfer successful');
+      print('\nUpdated source account status:');
+      source.printReceipt();
+      print('\nUpdated destination account status:');
+      destination.printReceipt();
     } else if (source.accountType == 'Checking') {
       print(
         '\nThis transfer is not allowed as you would exceed source account overdraft limit',
@@ -376,6 +382,45 @@ void doTransfer(Customer customer) {
       );
     }
     return;
+  }
+}
+
+void closeAccount(Customer customer) {
+  Account? account;
+  while (true) {
+    print('\nEnter account number to close');
+    String input = stdin.readLineSync() ?? '';
+    if (input.isEmpty) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    int accountNumber;
+    try {
+      accountNumber = int.parse(input);
+    } catch (e) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    for (Account acc in customer.accounts) {
+      if (accountNumber == acc.accountID) {
+        account = acc;
+      }
+    }
+
+    if (account == null) {
+      print('Account not found\n');
+      continue;
+    }
+
+    if (customer.accounts.remove(account)) {
+      print('Account closed successfully');
+      return;
+    } else {
+      print('Account not found\n');
+      continue;
+    }
   }
 }
 
@@ -395,10 +440,6 @@ class LoginResults {
 
   bool get isValid => _isValid;
   set isValid(value) => _isValid = value;
-}
-
-abstract interface class ITransaction {
-  void printReceipt();
 }
 
 class User {
@@ -445,7 +486,11 @@ class Admin extends User {
   Admin() : _id = -1, super(_usernameStatic, _passwordStatic);
 }
 
-abstract class Account {
+abstract interface class ITransaction {
+  void printReceipt();
+}
+
+abstract class Account implements ITransaction {
   late final int _accountID;
   late final Customer _accountHolder;
   late double _balance;
@@ -473,6 +518,15 @@ abstract class Account {
   }
 
   bool withdraw(double amount);
+
+  @override
+  void printReceipt() {
+    print(
+      'Account Type: $accountType | '
+      'Account ID: $accountID | '
+      'Balance: $balance',
+    );
+  }
 }
 
 class CheckingAccount extends Account {

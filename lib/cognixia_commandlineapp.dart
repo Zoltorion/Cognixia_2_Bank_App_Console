@@ -78,10 +78,13 @@ void customerDashboard(String username) {
       case 2:
         viewAllAccounts(customer);
       case 3:
+        doDeposit(customer);
       case 4:
       case 5:
       case 6:
       case 7:
+        print('Goodbye');
+        exit(0);
       default:
         print('Invalid input\n');
         continue;
@@ -147,7 +150,118 @@ void viewAllAccounts(Customer customer) {
     print('No accounts created');
   }
   for (Account account in customer.accounts) {
-    print('Account ID: ${account.accountID} | Balance: ${account.balance}');
+    print(
+      'Account Type: ${account.accountType} | '
+      'Account ID: ${account.accountID} | '
+      'Balance: ${account.balance}',
+    );
+  }
+  print('');
+}
+
+void doDeposit(Customer customer) {
+  Account? account;
+  while (true) {
+    print('\nEnter account number to deposit into');
+    String input = stdin.readLineSync() ?? '';
+    if (input.isEmpty) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    int accountNumber;
+    try {
+      accountNumber = int.parse(input);
+    } catch (e) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    for (Account acc in customer.accounts) {
+      if (accountNumber == acc.accountID) {
+        account = acc;
+      }
+    }
+
+    if (account == null) {
+      print('Account not found\n');
+      continue;
+    }
+
+    break;
+  }
+
+  while (true) {
+    print('\nEnter the amount you are depositing');
+    String input = stdin.readLineSync() ?? '';
+    if (input.isEmpty) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    double amount;
+    try {
+      amount = double.parse(input);
+    } catch (e) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    account.deposit(amount);
+    return;
+  }
+}
+
+void doWithdrawal(Customer customer) {
+  Account? account;
+  while (true) {
+    print('\nEnter account number to withdraw from');
+    String input = stdin.readLineSync() ?? '';
+    if (input.isEmpty) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    int accountNumber;
+    try {
+      accountNumber = int.parse(input);
+    } catch (e) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    for (Account acc in customer.accounts) {
+      if (accountNumber == acc.accountID) {
+        account = acc;
+      }
+    }
+
+    if (account == null) {
+      print('Account not found\n');
+      continue;
+    }
+
+    break;
+  }
+
+  while (true) {
+    print('\nEnter the amount to withdraw');
+    String input = stdin.readLineSync() ?? '';
+    if (input.isEmpty) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    double amount;
+    try {
+      amount = double.parse(input);
+    } catch (e) {
+      print('Invalid input\n');
+      continue;
+    }
+
+    account.withdraw(amount);
+    return;
   }
 }
 
@@ -221,6 +335,7 @@ abstract class Account {
   late final int _accountID;
   late final Customer _accountHolder;
   late double _balance;
+  static const String _accountType = 'N/A';
 
   Account(this._accountID, this._accountHolder, this._balance);
 
@@ -232,6 +347,8 @@ abstract class Account {
 
   double get balance => _balance;
   set balance(value) => _balance = value;
+
+  String get accountType => _accountType;
 
   static int getNextAccountID() {
     return _accounts.isEmpty ? 1 : _accounts.last.accountID + 1;
@@ -246,11 +363,15 @@ abstract class Account {
 
 class CheckingAccount extends Account {
   late double _overdraftLimit;
+  static const String _accountType = 'Checking';
 
   CheckingAccount(super._accountID, super._accountHolder, super._balance) {
     // default $100 overdraft limit (balance can go as low as -$100)
     _overdraftLimit = -100;
   }
+
+  @override
+  String get accountType => _accountType;
 
   @override
   void withdraw(double amount) {
@@ -267,10 +388,14 @@ class CheckingAccount extends Account {
 
 class SavingsAccount extends Account {
   late double _interestRate;
+  static const String _accountType = 'Savings';
 
   SavingsAccount(super._accountID, super._accountHolder, super._balance) {
     _interestRate = 0.02; // default 2% interest rate
   }
+
+  @override
+  String get accountType => _accountType;
 
   @override
   void withdraw(double amount) {

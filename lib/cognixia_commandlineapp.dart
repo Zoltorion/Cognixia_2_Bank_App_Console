@@ -80,6 +80,7 @@ void customerDashboard(String username) {
       case 3:
         doDeposit(customer);
       case 4:
+        doWithdraw(customer);
       case 5:
       case 6:
       case 7:
@@ -212,7 +213,7 @@ void doDeposit(Customer customer) {
   }
 }
 
-void doWithdrawal(Customer customer) {
+void doWithdraw(Customer customer) {
   Account? account;
   while (true) {
     print('\nEnter account number to withdraw from');
